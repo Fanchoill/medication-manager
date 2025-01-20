@@ -1,55 +1,149 @@
 import React from 'react';
+import { HashRouter as Router } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import styles from './styles/App.module.css';
+import { StorageService } from './utils/storage';
+import { validatePassword, hashPassword } from './utils/security';
 
-const App = () => {
+// Components for different sections
+const AdminSetup = () => {
+  const [adminData, setAdminData] = useState({
+    username: '',
+    password: '',
+    email: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Add admin creation logic here
+    console.log('Creating admin account:', adminData);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Main Container */}
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl m-4">
-        {/* Header Section */}
-        <header className="p-6 border-b border-gray-200">
-          <h1 className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
-            Medication Manager
-          </h1>
-          <p className="mt-2 text-slate-500">
-            Secure medication tracking and management
-          </p>
-        </header>
+    <div className="admin-setup">
+      <h2>Create Administrator Account</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Username"
+          value={adminData.username}
+          onChange={(e) => setAdminData({...adminData, username: e.target.value})}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={adminData.password}
+          onChange={(e) => setAdminData({...adminData, password: e.target.value})}
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={adminData.email}
+          onChange={(e) => setAdminData({...adminData, email: e.target.value})}
+        />
+        <button type="submit">Create Admin Account</button>
+      </form>
+    </div>
+  );
+};
 
-        {/* Main Content Area */}
-        <main className="p-6">
-          {/* Dashboard Preview */}
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <button className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                  Add Medication
-                </button>
-                <button className="w-full bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-                  View Inventory
-                </button>
-              </div>
-            </div>
+const MedicationManagement = () => {
+  const [medications, setMedications] = useState([]);
+  const [newMed, setNewMed] = useState({
+    name: '',
+    dosage: '',
+    frequency: '',
+    inventory: 0
+  });
 
-            {/* Status Section */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h2 className="text-lg font-medium text-gray-900">System Status</h2>
-              <p className="mt-2 text-sm text-gray-600">
-                All systems operational
-              </p>
-            </div>
-          </div>
-        </main>
+  const handleAddMedication = (e) => {
+    e.preventDefault();
+    setMedications([...medications, newMed]);
+    setNewMed({ name: '', dosage: '', frequency: '', inventory: 0 });
+  };
 
-        {/* Footer */}
-        <footer className="p-6 bg-gray-50">
-          <p className="text-sm text-gray-500">
-            Version 0.1 - Development Build
-          </p>
-        </footer>
+  return (
+    <div className="medication-management">
+      <h2>Medication Management</h2>
+      <form onSubmit={handleAddMedication}>
+        <input
+          type="text"
+          placeholder="Medication Name"
+          value={newMed.name}
+          onChange={(e) => setNewMed({...newMed, name: e.target.value})}
+        />
+        <input
+          type="text"
+          placeholder="Dosage"
+          value={newMed.dosage}
+          onChange={(e) => setNewMed({...newMed, dosage: e.target.value})}
+        />
+        <input
+          type="text"
+          placeholder="Frequency"
+          value={newMed.frequency}
+          onChange={(e) => setNewMed({...newMed, frequency: e.target.value})}
+        />
+        <input
+          type="number"
+          placeholder="Initial Inventory"
+          value={newMed.inventory}
+          onChange={(e) => setNewMed({...newMed, inventory: parseInt(e.target.value)})}
+        />
+        <button type="submit">Add Medication</button>
+      </form>
+
+      <div className="medication-list">
+        <h3>Current Medications</h3>
+        <ul>
+          {medications.map((med, index) => (
+            <li key={index}>
+              {med.name} - {med.dosage} - {med.frequency} (Stock: {med.inventory})
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 };
 
-export default App;
+const App = () => {
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [hasAdmin, setHasAdmin] = useState(false);
+
+  useEffect(() => {
+    // Check if system is initialized and has admin
+    // This would typically check localStorage or a backend
+    setIsInitialized(true);
+    setHasAdmin(false); // Set to true if admin exists
+  }, []);
+
+function App() {
+  return (
+    <HashRouter>
+      <div className="app">
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              !isInitialized ? (
+                <InitialSetup onComplete={() => setIsInitialized(true)} />
+              ) : !hasAdmin ? (
+                <AdminSetup onComplete={() => setHasAdmin(true)} />
+              ) : (
+                <Navigate to="/medications" />
+              )
+            } 
+          />
+          <Route path="/medications" element={<MedicationManagement />} />
+	  <Route path="/admin/panel" element={<ProtectedRoute isAdmin>
+		  <Admin Panel />
+	  </ProtectedRoute>
+	  } />
+        </Routes>
+      </div>
+    </HashRouter>
+  );
+}
+}
+
